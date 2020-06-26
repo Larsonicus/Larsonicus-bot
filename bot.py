@@ -155,4 +155,4 @@ async def msg_input(ctx, *text):
     await ctx.channel.purge(limit=1) # удаляет команду
     await bot.get_channel(607609329616551946).send(" ".join(text))
 
-bot.run(os.getenviron.get("BOT_TOKEN"))
+bot.run(os.environ.get("BOT_TOKEN"))
