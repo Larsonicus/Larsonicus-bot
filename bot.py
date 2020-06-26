@@ -2,6 +2,7 @@ import random
 import discord
 from discord.ext import commands
 from discord.utils import get
+import os
 
 # emoji2 = ["<:tamer:549326767526117376>", "<:test:574552428377014272>", '<:spirit:549326766368358401>']
 
@@ -154,4 +155,4 @@ async def msg_input(ctx, *text):
     await ctx.channel.purge(limit=1) # удаляет команду
     await bot.get_channel(607609329616551946).send(" ".join(text))
 
-bot.run(open("token.txt").readline())
+bot.run(os.getenviron.get("BOT_TOKEN"))
