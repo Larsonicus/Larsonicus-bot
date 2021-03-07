@@ -145,10 +145,10 @@ def get_image(html):
     return image
 
 
-@bot.command(name="фулл", aliases=['full'], help="Скидывает фулл")
-async def parse(self, ctx):
+@bot.command(name="фулл", aliases=['full'], help="Скидывает фулл", pass_context=True)
+async def parse(ctx, arg):
     global url
-    url = f'https://rule34.xxx/index.php?page=post&s=list&tags={ctx}+-gay'
+    url = f'https://rule34.xxx/index.php?page=post&s=list&tags={arg}+-gay'
     html = get_html(url)
     pages_links = get_pages_count(html.text)
     if pages_links is None:
