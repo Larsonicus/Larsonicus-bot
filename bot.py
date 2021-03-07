@@ -152,7 +152,7 @@ async def parse(self, ctx):
     html = get_html(url)
     pages_links = get_pages_count(html.text)
     if pages_links is None:
-        return await bot.get_channel(log_channel).send('Введите корректный запрос')
+        return await ctx.send('Введите корректный запрос')
     images_links = []
     pages = []
     for page in pages_links:
@@ -166,7 +166,7 @@ async def parse(self, ctx):
     html = get_html(image_link)
     images = []
     images.extend(get_image(html.text))
-    await bot.get_channel(xxx_channel).send((random.choice(images)))  # если сверху заменять, то тут до какого элемента
+    await ctx.send((random.choice(images)))  # если сверху заменять, то тут до какого элемента
 
 
 bot.run(os.environ.get("BOT_TOKEN"))
