@@ -1,19 +1,23 @@
 import random
 import discord
 from discord.ext import commands
-from discord.utils import get
 import os
+import logging
+import requests
+from bs4 import BeautifulSoup
+
+# emoji = []
 
 
-# Список эмоций доступных на сервере "Мой сервер"
-emoji = ['<:ebalo:712968930527805490>', '<:daun:714036936754331692>', '<:aaa:533748414626791454>',
-         '<:GLINOMES:716667338996318300>', '<:golub:716244043000184852>', '<:LUL:567402264348590081>',
-         '<:obosralsa:531554455003463700>', '<:reich:471280128882901002>', '<:roflanebalo:531554213713674251>',
-         '<:ussr:471282206367809557>', '<:viktor:533748501524512768>', '<:vitya:716243896681627688>',
-         '<:bot:721763665895882802>']
+game = ["камень", "ножницы", "бумага"]
 
-# Список фигур для игры в камень, ножницы, бумага
-igra = ["камень", "ножницы", "бумага"]
+HEADERS = {'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4414.0 '
+                         'Safari/537.36 Edg/90.0.803.0', 'accept': '*/*'}
+HOST = 'https://rule34.xxx/'
+
+log_channel = 818119479589470259
+
+logging.basicConfig(level=logging.INFO)
 
 bot = commands.Bot(command_prefix="$", case_insensitive=True)
 
@@ -22,48 +26,35 @@ bot = commands.Bot(command_prefix="$", case_insensitive=True)
 async def on_ready():
     print(f'{bot.user.name} готов к работе.')
 
+
 @bot.event
 async def on_command_error(ctx, error):
     print(f'В собщении от {ctx.author}: "{ctx.message.content}" Ошибка: {error}')  # вывод ошибки
 
     if isinstance(error, discord.ext.commands.errors.CommandNotFound):
-        await ctx.send(f'Нема таково, {ctx.author.mention} {emoji[6]}.')
+        await ctx.send(f'Данной команды не существует, {ctx.author.mention}.')
     if isinstance(error, discord.ext.commands.errors.MissingPermissions):
-        await ctx.send(f'Ты бесправное животное {ctx.author.mention} {emoji[5]}.')
+        await ctx.send(f'Ты бесправное животное {ctx.author.mention}.')
+
 
 @bot.event
 async def on_message(message):
     if not message.author.bot:
         if message.content.lower() in ["нет", "net", "ytn"]:
-            await message.channel.send(f'Пидора ответ! Ха-ха {message.author.mention}{emoji[5]}.')
+            await message.channel.send(f'Пидора ответ! Ха-ха {message.author.mention}.')
         if message.content.lower() in ["da", "да", "lf", "d4"]:
-            await message.channel.send(f'Манда! Ахахахах {message.author.mention}{emoji[0]}.')
-        if message.content.lower() in ["no", "ноу", "nO", "ноу"]:
-            await message.channel.send(f'Хуйоу! {message.author.mention}{emoji[4]}.')
-        if message.content.lower() in ["yes", "йес"]:
-            await message.channel.send(f'Хуйес! {message.author.mention}{emoji[3]}.')
-        if message.content.lower() in ["пидорас", "ПИДАРАС"]:
-            await message.channel.send(f'Я ебал тебя в ass! {message.author.mention}{emoji[3]}.')
-        if message.content.lower() in ["бот тупой", "bot tupoi", "bot tupoy"]:  # 0
-            await message.channel.send(f'А может ты тупой? {message.author.mention}{emoji[12]}.')
-        if message.content.lower() in ["пидор", "pidor", "бот пидр", "Бот Пидор"]:  # 0
-            await message.channel.send(f'А может быть ты пидор? {message.author.mention}{emoji[4]}.')
-        if message.content.lower() in ["бот хуесос"]:  # 0
-            await message.channel.send(f'А может ты хуесос? {message.author.mention}.')
-        if message.content.lower() in ["бот лох"]:  # 0
-            await message.channel.send(f'А может ты лох? {message.author.mention}.')
+            await message.channel.send(f'Манда! Ахахахах {message.author.mention}.')
         if message.content.startswith("$"):
             await bot.process_commands(message)
-        if not message.content.startswith("$"):
-            await message.add_reaction(message.guild.emojis[random.randint(0, len(message.guild.emojis) - 1)])
+        '''if not message.content.startswith("$"):  # реакция на сообщение
+            await message.add_reaction(message.guild.emojis[random.randint(0, len(message.guild.emojis) - 1)])'''
 
 
 @bot.event
-async def on_message_delete(message):
+async def on_message_delete(message):  # также добавить, когда юзер изменяет сообщение
     if not message.author.bot:
         if not message.content.startswith("$"):
             if not message.content == "":
-                # if not message.author == :
                 await message.channel.send(f'Пользователь {message.author.mention} удалил сообщение:')
                 await message.channel.send(f'>>> {message.content}')
 
@@ -79,8 +70,8 @@ async def ping(ctx):
 
 
 @bot.command(name="камень", help="Выбросить камень")
-async def kamen(ctx):
-    a = igra[random.randint(0, 2)]
+async def rock(ctx):
+    a = game[random.randint(0, 2)]
     await ctx.send(f"Я выбросил {a}.")
     if a == "камень":
         await ctx.send(f"Ничья! {ctx.author.mention}.")
@@ -91,8 +82,8 @@ async def kamen(ctx):
 
 
 @bot.command(name="ножницы", help="Выбросить ножницы")
-async def nozhnici(ctx):
-    a = igra[random.randint(0, 2)]
+async def scissors(ctx):
+    a = game[random.randint(0, 2)]
     await ctx.send(f"Я выбросил {a}.")
     if a == "ножницы":
         await ctx.send(f"Ничья! {ctx.author.mention}.")
@@ -103,8 +94,8 @@ async def nozhnici(ctx):
 
 
 @bot.command(name="бумага", help="Выбросить бумагу")
-async def bymaga(ctx):
-    a = igra[random.randint(0, 2)]
+async def paper(ctx):
+    a = game[random.randint(0, 2)]
     await ctx.send(f"Я выбросил {a}.")
     if a == "бумага":
         await ctx.send(f"Ничья! {ctx.author.mention}.")
@@ -114,46 +105,68 @@ async def bymaga(ctx):
         await ctx.send(f"Ты проиграл! {ctx.author.mention}.")
 
 
-@bot.command(name="фак", aliases=["afr"], help="против фака есть 3 знака")
-async def fuck(ctx):
-    a = igra[random.randint(0, 2)]
-    await ctx.send(f'Я выбросил {a}')
-    if a == "камень" or "бумага" or "ножницы":
-        await ctx.send(f'Ты проиграл {ctx.author.mention}.')
+def get_html(url, params=None):
+    r = requests.get(url, headers=HEADERS, params=params)
+    return r
 
 
-@bot.command(name="каменьножницыбумага")
-async def knb(ctx):
-    await ctx.send(f"Ты долбаеб {ctx.author.mention}.")
+def get_pages_count(html):
+    soup = BeautifulSoup(html, 'html.parser')
+    pagination = soup.find('div', class_='pagination')
+    try:
+        p = pagination.find_all('a')
+        pages = [url]
+        for page in p:
+            pages.append(HOST + (page.get('href')))
+    except AttributeError:
+        pages = None
+    return pages
 
 
-# @bot.command(name="з")
-# async def join(ctx):
-#    global voice
-#    channel = ctx.message.author.voice.channel
-#    voice = get(bot.voice_clients, guild=ctx.guild)
-#
-#    if voice and voice.is_connected():
-#        await voice.move_to(channel)
-#    else:
-#        voice = await channel.connect()
+def get_content(html):
+    soup = BeautifulSoup(html, 'html.parser')
+    items = soup.find_all('span', class_='thumb')
+    links = []
+    for i in items:
+        links.append(HOST + i.find('a').get('href'))
+    return links
 
 
-@bot.command(name="в", help="Войти/выйти")
-async def leave(ctx):
-    channel = ctx.message.author.voice.channel
-    voice = get(bot.voice_clients, guild=ctx.guild)
+def get_image(html):
+    soup = BeautifulSoup(html, 'html.parser')
+    items = soup.find_all('div', class_='flexi')
+    image = []
+    for i in items:
+        try:
+            image.append(i.find('img', alt_='').get('src'))
+        except AttributeError:
+            print('Обнаружен некорректный пост')
+    return image
 
-    if voice and voice.is_connected():
-        await voice.disconnect()
-    else:
-        voice = await channel.connect()
+
+@bot.command(name="фулл", aliases=['full'], help="Скидывает фулл")
+async def parse(self, ctx):
+    global url
+    url = f'https://rule34.xxx/index.php?page=post&s=list&tags={ctx}+-gay'
+    html = get_html(url)
+    pages_links = get_pages_count(html.text)
+    if pages_links is None:
+        return await bot.get_channel(log_channel).send('Введите корректный запрос')
+    images_links = []
+    i = 1
+    for page in pages_links:
+        print(f'Парсинг страницы {i} из {len(pages_links)}...')
+        i += 1
+        html = get_html(page)
+        try:
+            images_links.extend(get_content(html.text))
+        except TypeError:
+            print('Обнаружена некоректная страница')
+    images = []
+    image_link = random.choice(images_links)
+    html = get_html(image_link)
+    images.extend(get_image(html.text))
+    await bot.get_channel(818128708439244821).send((random.choice(images)))  # если сверху заменять, то тут до какого элемента
 
 
-@bot.command(name="say")
-@commands.has_permissions(administrator=True)
-async def msg_input(ctx, *text):
-    await ctx.channel.purge(limit=1) # удаляет команду
-    await bot.get_channel(607609329616551946).send(" ".join(text))
-
-bot.run(os.environ.get("BOT_TOKEN"))
+bot.run(os.environ.get("BOT_TOKEN", open("token.txt").readline()))
