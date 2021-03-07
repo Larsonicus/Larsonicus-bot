@@ -15,8 +15,8 @@ HEADERS = {'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KH
                          'Safari/537.36 Edg/90.0.803.0', 'accept': '*/*'}
 HOST = 'https://rule34.xxx/'
 
-log_channel = 818119479589470259
-xxx_channel = 818128708439244821
+log_channel = 710931680701186110  # 818119479589470259
+xxx_channel = 710931680701186110  # 818128708439244821
 
 logging.basicConfig(level=logging.INFO)
 
