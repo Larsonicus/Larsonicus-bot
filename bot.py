@@ -16,6 +16,7 @@ HEADERS = {'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KH
 HOST = 'https://rule34.xxx/'
 
 log_channel = 818119479589470259
+xxx_channel = 818128708439244821
 
 logging.basicConfig(level=logging.INFO)
 
@@ -153,20 +154,19 @@ async def parse(self, ctx):
     if pages_links is None:
         return await bot.get_channel(log_channel).send('Введите корректный запрос')
     images_links = []
-    i = 1
+    pages = []
     for page in pages_links:
-        print(f'Парсинг страницы {i} из {len(pages_links)}...')
-        i += 1
-        html = get_html(page)
-        try:
-            images_links.extend(get_content(html.text))
-        except TypeError:
-            print('Обнаружена некоректная страница')
-    images = []
+        pages.append(page)
+    html = get_html(random.choice(pages))
+    try:
+        images_links.extend(get_content(html.text))
+    except TypeError:
+        print('Обнаружена некоректная страница')
     image_link = random.choice(images_links)
     html = get_html(image_link)
+    images = []
     images.extend(get_image(html.text))
-    await bot.get_channel(818128708439244821).send((random.choice(images)))  # если сверху заменять, то тут до какого элемента
+    await bot.get_channel(xxx_channel).send((random.choice(images)))  # если сверху заменять, то тут до какого элемента
 
 
 bot.run(os.environ.get("BOT_TOKEN"))
