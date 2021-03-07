@@ -169,4 +169,4 @@ async def parse(self, ctx):
     await bot.get_channel(818128708439244821).send((random.choice(images)))  # если сверху заменять, то тут до какого элемента
 
 
-bot.run(os.environ.get("BOT_TOKEN", open("token.txt").readline()))
+bot.run(os.environ.get("BOT_TOKEN"))
