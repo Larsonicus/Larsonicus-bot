@@ -148,9 +148,8 @@ def get_image(html):
 
 
 @bot.command(name="фулл", aliases=['full'], help="Скидывает фулл", pass_context=True)
-async def parse(ctx, tag):
-    if tag is None:
-        return await ctx.send('Введите корректный запрос')
+async def parse(ctx, *tag):
+    tag = ''.join(tag)
     blacklist = '+-gay+-futanari+-1futa+-2futas+-3futas+-solo_male+-male_only+-trap+-femboy+-fat+-bbw'
     global url
     url = f'https://rule34.xxx/index.php?page=post&s=list&tags={tag}{blacklist}'
