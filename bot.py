@@ -137,18 +137,23 @@ def get_image(html):
     soup = BeautifulSoup(html, 'html.parser')
     items = soup.find_all('div', class_='flexi')
     image = []
-    for i in items:
-        try:
+    try:
+        for i in items:
             image.append(i.find('img', alt_='').get('src'))
-        except AttributeError:
-            print('Обнаружен некорректный пост')
+    except AttributeError:
+        videos = soup.find_all('source')
+        for video in videos:
+            image.append(video.get('src'))
     return image
 
 
 @bot.command(name="фулл", aliases=['full'], help="Скидывает фулл", pass_context=True)
-async def parse(ctx, arg):
+async def parse(ctx, tag):
+    if tag is None:
+        return await ctx.send('Введите корректный запрос')
+    blacklist = '+-gay+-futanari+-1futa+-2futas+-3futas+-solo_male+-male_only+-trap+-femboy+-fat+-bbw'
     global url
-    url = f'https://rule34.xxx/index.php?page=post&s=list&tags={arg}+-gay'
+    url = f'https://rule34.xxx/index.php?page=post&s=list&tags={tag}{blacklist}'
     html = get_html(url)
     pages_links = get_pages_count(html.text)
     if pages_links is None:
@@ -161,8 +166,11 @@ async def parse(ctx, arg):
     try:
         images_links.extend(get_content(html.text))
     except TypeError:
-        print('Обнаружена некоректная страница')
-    image_link = random.choice(images_links)
+        print('Обнаружена некорректная страница')
+    try:
+        image_link = random.choice(images_links)
+    except IndexError:
+        return await ctx.send('Не важно')
     html = get_html(image_link)
     images = []
     images.extend(get_image(html.text))
