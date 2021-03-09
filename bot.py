@@ -6,20 +6,16 @@ import logging
 import requests
 from bs4 import BeautifulSoup
 
-# emoji = []
-
-
 game = ["камень", "ножницы", "бумага"]
 
 blacklist = '+-yaoi+-gay+-futanari+-1futa+-2futas+-3futas+-male/male+-solo_male+-male_only+-trap+-femboy' \
             '+-overweight+-fat+-bbw+-pavel+-doodledoggy+-nike_neko+-ventrexian+-mephitid+-anthro+-giant_boobs' \
             '+-giant_ass+-gigantic_ass+-gigantic_nipples+-gigantic_breasts+-dendrophilia+-heavy_bondage+-edithemad'
+
 HEADERS = {'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4414.0 '
                          'Safari/537.36 Edg/90.0.803.0', 'accept': '*/*'}
-HOST = 'https://rule34.xxx/'
 
-log_channel = 710931680701186110  # 818119479589470259
-xxx_channel = 710931680701186110  # 818128708439244821
+HOST = 'https://rule34.xxx/'
 
 logging.basicConfig(level=logging.INFO)
 
@@ -185,10 +181,10 @@ async def parse(ctx, *tac):  # tac - tag and count
     html = get_html(url)
     pages_links = get_pages_links(url, html.text)
     if pages_links == 0:
-        return await ctx.send(f'Введите корректный запрос {ctx.author.mention}')
+        return await ctx.send(f'Введите корректный запрос {ctx.author.mention}.')
     pages = []
     if amount > 100:
-        await ctx.send(f'Не больше 100 картинок! {ctx.author.mention}')
+        await ctx.send(f'Не больше 100 картинок! {ctx.author.mention}.')
         amount = 1
     for page in pages_links:
         pages.append(page)
