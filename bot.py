@@ -12,8 +12,8 @@ from bs4 import BeautifulSoup
 game = ["камень", "ножницы", "бумага"]
 
 blacklist = '+-yaoi+-gay+-futanari+-1futa+-2futas+-3futas+-male/male+-solo_male+-male_only+-trap+-femboy' \
-                '+-overweight+-fat+-bbw+-pavel+-doodledoggy+-nike_neko+-ventrexian+-mephitid+-anthro+-giant_boobs' \
-                '+-giant_ass+-gigantic_ass+-gigantic_nipples+-gigantic_breasts+-dendrophilia+-heavy_bondage'
+            '+-overweight+-fat+-bbw+-pavel+-doodledoggy+-nike_neko+-ventrexian+-mephitid+-anthro+-giant_boobs' \
+            '+-giant_ass+-gigantic_ass+-gigantic_nipples+-gigantic_breasts+-dendrophilia+-heavy_bondage'
 HEADERS = {'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4414.0 '
                          'Safari/537.36 Edg/90.0.803.0', 'accept': '*/*'}
 HOST = 'https://rule34.xxx/'
@@ -82,7 +82,7 @@ async def rock(ctx):
     elif a == "ножницы":
         await ctx.send(f"Ты выиграл! {ctx.author.mention}.")
     elif a == "бумага":
-        await ctx.send(f"Ты проиграл! Лох {ctx.author.mention}.")
+        await ctx.send(f"Ты проиграл! {ctx.author.mention}.")
 
 
 @bot.command(name="ножницы", help="Выбросить ножницы")
@@ -109,35 +109,6 @@ async def paper(ctx):
         await ctx.send(f"Ты проиграл! {ctx.author.mention}.")
 
 
-def get_html(url, params=None):
-    r = requests.get(url, headers=HEADERS, params=params)
-    return r
-
-
-def get_pages_count(html):
-    soup = BeautifulSoup(html, 'html.parser')
-    pagination = soup.find('div', class_='pagination')
-    try:
-        p = pagination.find_all('a')
-        pages = [url]
-        for page in p:
-            pages.append(HOST + (page.get('href')))
-        if len(pages) >= 11:
-            del pages[-2:]
-    except AttributeError:  # по заданному tag нет страниц
-        pages = None
-    return pages
-
-
-def get_content(html):
-    soup = BeautifulSoup(html, 'html.parser')
-    items = soup.find_all('span', class_='thumb')
-    links = []
-    for i in items:
-        links.append(HOST + i.find('a').get('href'))
-    return links
-
-
 def get_image(html):
     soup = BeautifulSoup(html, 'html.parser')
     items = soup.find_all('div', class_='flexi')
@@ -152,14 +123,54 @@ def get_image(html):
     return image
 
 
+def get_content(html):
+    soup = BeautifulSoup(html, 'html.parser')
+    items = soup.find_all('span', class_='thumb')
+    links = []
+    for i in items:
+        links.append(HOST + i.find('a').get('href'))
+    return links
+
+
+async def send_image(ctx, pages):
+    html = get_html(random.choice(pages))
+    posts_links = get_content(html.text)
+    image_link = random.choice(posts_links)
+    html = get_html(image_link)
+    await ctx.send(get_image(html.text))
+
+
+def get_pages_links(url, html):
+    soup = BeautifulSoup(html, 'html.parser')
+    pagination = soup.find('div', class_='pagination')
+    try:
+        p = pagination.find_all('a')
+        pages = [url]
+        for page in p:
+            pages.append(HOST + (page.get('href')))
+        if len(pages) >= 11:
+            del pages[-2:]
+    except AttributeError:  # по заданному tag нет страниц
+        pages = 0
+    return pages
+
+
+def get_html(url, params=None):
+    r = requests.get(url, headers=HEADERS, params=params)
+    return r
+
+
 @bot.command(name="фулл", aliases=['full'], help="Скидывает фулл", pass_context=True)
 async def parse(ctx, *tac):  # tac - tag and count
     amount = 1
     tag = ''
     try:
+        amount = int(tac[0])
+    except ValueError:
         tag = tac[0]
-    except IndexError:  # tac не указан
-        pass
+    except IndexError:
+        tag = tag
+        print(tag)
     try:
         amount = int(tac[-1])
     except IndexError:  # tac не указан
@@ -170,29 +181,25 @@ async def parse(ctx, *tac):  # tac - tag and count
             tag = tac[1]
         except ValueError:
             tag = tac[0]
-    global url
     url = f'https://rule34.xxx/index.php?page=post&s=list&tags={tag}{blacklist}'
     html = get_html(url)
-    pages_links = get_pages_count(html.text)
-    if pages_links is None:
-        return await ctx.send('Введите корректный запрос')
+    pages_links = get_pages_links(url, html.text)
+    if pages_links == 0:
+        return await ctx.send(f'Введите корректный запрос {ctx.author.mention}')
     pages = []
+    if amount > 100:
+        await ctx.send(f'Не больше 100 картинок! {ctx.author.mention}')
+        amount = 1
     for page in pages_links:
         pages.append(page)
-    await get_many_links(ctx, pages)
-    a = 1
-    while a < amount:
-        a += 1
-        await get_many_links(ctx, pages)
+    for a in range(amount):
+        await send_image(ctx, pages)
 
 
-async def get_many_links(ctx, pages):
-    html = get_html(random.choice(pages))
-    posts_links = []
-    posts_links.extend(get_content(html.text))
-    image_link = random.choice(posts_links)
-    html = get_html(image_link)
-    await ctx.send(get_image(html.text))
+@bot.command(name='purge', help='Удаляет необходимое количество сообщений из канала.', hidden=True)
+@commands.has_permissions(administrator=True)
+async def purge_message(ctx, limit: int):
+    await ctx.channel.purge(limit=limit)
 
 
 bot.run(os.environ.get("BOT_TOKEN"))
