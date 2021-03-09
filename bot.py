@@ -11,6 +11,9 @@ from bs4 import BeautifulSoup
 
 game = ["камень", "ножницы", "бумага"]
 
+blacklist = '+-yaoi+-gay+-futanari+-1futa+-2futas+-3futas+-male/male+-solo_male+-male_only+-trap+-femboy' \
+                '+-overweight+-fat+-bbw+-pavel+-doodledoggy+-nike_neko+-ventrexian+-mephitid+-anthro+-giant_boobs' \
+                '+-giant_ass+-gigantic_ass+-gigantic_nipples+-gigantic_breasts+-dendrophilia+-heavy_bondage'
 HEADERS = {'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4414.0 '
                          'Safari/537.36 Edg/90.0.803.0', 'accept': '*/*'}
 HOST = 'https://rule34.xxx/'
@@ -119,7 +122,9 @@ def get_pages_count(html):
         pages = [url]
         for page in p:
             pages.append(HOST + (page.get('href')))
-    except AttributeError:
+        if len(pages) >= 11:
+            del pages[-2:]
+    except AttributeError:  # по заданному tag нет страниц
         pages = None
     return pages
 
@@ -136,44 +141,58 @@ def get_content(html):
 def get_image(html):
     soup = BeautifulSoup(html, 'html.parser')
     items = soup.find_all('div', class_='flexi')
-    image = []
+    image = ''
     try:
         for i in items:
-            image.append(i.find('img', alt_='').get('src'))
-    except AttributeError:
+            image = (i.find('img', alt_='').get('src'))
+    except AttributeError:  # if video
         videos = soup.find_all('source')
         for video in videos:
-            image.append(video.get('src'))
+            image = (video.get('src'))
     return image
 
 
 @bot.command(name="фулл", aliases=['full'], help="Скидывает фулл", pass_context=True)
-async def parse(ctx, *tag):
-    tag = ''.join(tag)
-    blacklist = '+-gay+-futanari+-1futa+-2futas+-3futas+-solo_male+-male_only+-trap+-femboy+-fat+-bbw'
+async def parse(ctx, *tac):  # tac - tag and count
+    amount = 1
+    tag = ''
+    try:
+        tag = tac[0]
+    except IndexError:  # tac не указан
+        pass
+    try:
+        amount = int(tac[-1])
+    except IndexError:  # tac не указан
+        pass
+    except ValueError:
+        try:
+            amount = int(tac[0])
+            tag = tac[1]
+        except ValueError:
+            tag = tac[0]
     global url
     url = f'https://rule34.xxx/index.php?page=post&s=list&tags={tag}{blacklist}'
     html = get_html(url)
     pages_links = get_pages_count(html.text)
     if pages_links is None:
         return await ctx.send('Введите корректный запрос')
-    images_links = []
     pages = []
     for page in pages_links:
         pages.append(page)
+    await get_many_links(ctx, pages)
+    a = 1
+    while a < amount:
+        a += 1
+        await get_many_links(ctx, pages)
+
+
+async def get_many_links(ctx, pages):
     html = get_html(random.choice(pages))
-    try:
-        images_links.extend(get_content(html.text))
-    except TypeError:
-        print('Обнаружена некорректная страница')
-    try:
-        image_link = random.choice(images_links)
-    except IndexError:
-        return await ctx.send('Не важно')
+    posts_links = []
+    posts_links.extend(get_content(html.text))
+    image_link = random.choice(posts_links)
     html = get_html(image_link)
-    images = []
-    images.extend(get_image(html.text))
-    await ctx.send((random.choice(images)))  # если сверху заменять, то тут до какого элемента
+    await ctx.send(get_image(html.text))
 
 
 bot.run(os.environ.get("BOT_TOKEN"))
