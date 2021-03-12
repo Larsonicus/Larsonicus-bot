@@ -29,7 +29,7 @@ async def on_ready():
 
 @bot.event
 async def on_command_error(ctx, error):
-    print(f'В собщении от {ctx.author}: "{ctx.message.content}" Ошибка: {error}')  # вывод ошибки
+    print(f'В собщении от {ctx.author}: "{ctx.message.content}" Ошибка: {error}.')  # вывод ошибки
 
     if isinstance(error, discord.ext.commands.errors.CommandNotFound):
         await ctx.send(f'Данной команды не существует, {ctx.author.mention}.')
@@ -42,7 +42,7 @@ async def on_message(message):
     if not message.author.bot:
         if message.content.lower() in ["нет", "net", "ytn"]:
             await message.channel.send(f'Пидора ответ! Ха-ха {message.author.mention}.')
-        if message.content.lower() in ["da", "да", "lf", "d4"]:
+        if message.content.lower() in ["da", "да", "lf"]:
             await message.channel.send(f'Манда! Ахахахах {message.author.mention}.')
         if message.content.startswith("$"):
             await bot.process_commands(message)
@@ -59,17 +59,15 @@ async def on_message_delete(message):  # также добавить, когда
                 await message.channel.send(f'>>> {message.content}')
 
 
-@bot.command(help="Это пинг, отвечает понг")
+@bot.command(name="ping", aliases=["пинг"], help="Это пинг, отвечает понг")
 async def ping(ctx):
-    if ctx.message.content.startswith("$пинг") or ctx.message.content.startswith("$Пинг") \
-            or ctx.message.content.startswith("$ПИНГ"):
-        await ctx.send(f"Понг! {ctx.author.mention}")
-    elif ctx.message.content.startswith("$ping") or ctx.message.content.startswith("$Ping") \
-            or ctx.message.content.startswith("$PING"):
-        await ctx.send(f"Pong! {ctx.author.mention}")
+    if ctx.message.content.lower().startswith("$ping"):
+        await ctx.send(f"Pong! {ctx.author.mention}.")
+    elif ctx.message.content.lower().startswith("$понг"):
+        await ctx.send(f"Понг! {ctx.author.mention}.")
 
 
-@bot.command(name="камень", help="Выбросить камень")
+@bot.command(name="rock", aliases=["камень"], help="Выбросить камень")
 async def rock(ctx):
     a = game[random.randint(0, 2)]
     await ctx.send(f"Я выбросил {a}.")
@@ -77,31 +75,31 @@ async def rock(ctx):
         await ctx.send(f"Ничья! {ctx.author.mention}.")
     elif a == "ножницы":
         await ctx.send(f"Ты выиграл! {ctx.author.mention}.")
-    elif a == "бумага":
+    else:
         await ctx.send(f"Ты проиграл! {ctx.author.mention}.")
 
 
-@bot.command(name="ножницы", help="Выбросить ножницы")
+@bot.command(name="scissors", aliases=["ножницы"], help="Выбросить ножницы")
 async def scissors(ctx):
     a = game[random.randint(0, 2)]
     await ctx.send(f"Я выбросил {a}.")
     if a == "ножницы":
         await ctx.send(f"Ничья! {ctx.author.mention}.")
-    if a == "бумага":
+    elif a == "бумага":
         await ctx.send(f"Ты выиграл! {ctx.author.mention}.")
-    if a == "камень":
+    else:
         await ctx.send(f"Ты проиграл! {ctx.author.mention}.")
 
 
-@bot.command(name="бумага", help="Выбросить бумагу")
+@bot.command(name="paper", aliases=["бумага"], help="Выбросить бумагу")
 async def paper(ctx):
     a = game[random.randint(0, 2)]
     await ctx.send(f"Я выбросил {a}.")
     if a == "бумага":
         await ctx.send(f"Ничья! {ctx.author.mention}.")
-    if a == "камень":
+    elif a == "камень":
         await ctx.send(f"Ты выиграл! {ctx.author.mention}.")
-    if a == "ножницы":
+    else:
         await ctx.send(f"Ты проиграл! {ctx.author.mention}.")
 
 
@@ -156,8 +154,7 @@ def get_html(url, params=None):
     return r
 
 
-@bot.command(name="фулл", aliases=['full'], help="Скидывает фулл", pass_context=True)
-async def parse(ctx, *tac):  # tac - tag and count
+def try_except(*tac):
     amount = 1
     tag = ''
     try:
@@ -177,15 +174,25 @@ async def parse(ctx, *tac):  # tac - tag and count
             tag = tac[1]
         except ValueError:
             tag = tac[0]
+    list_tac = [tag, amount]
+    return list_tac
+
+
+@bot.command(name="full", aliases=["фулл"], help="Скидывает фулл", pass_context=True)
+async def parse(ctx, *tac):  # tac - tag and count
+    list_tac = try_except(*tac)
+    tag = list_tac[0]
+    amount = list_tac[1]
     url = f'https://rule34.xxx/index.php?page=post&s=list&tags={tag}{blacklist}'
     html = get_html(url)
     pages_links = get_pages_links(url, html.text)
     if pages_links == 0:
         return await ctx.send(f'Введите корректный запрос {ctx.author.mention}.')
-    pages = []
     if amount > 100:
-        await ctx.send(f'Не больше 100 картинок! {ctx.author.mention}.')
-        amount = 1
+        return await ctx.send(f'Не больше 100 картинок! {ctx.author.mention}.')
+    elif amount < 0:
+        return await ctx.send(f'Не меньше 0 картинок! {ctx.author.mention}.')
+    pages = []
     for page in pages_links:
         pages.append(page)
     for a in range(amount):
@@ -198,4 +205,4 @@ async def purge_message(ctx, limit: int):
     await ctx.channel.purge(limit=limit)
 
 
-bot.run(os.environ.get("BOT_TOKEN"))
+bot.run(os.environ.get("BOT_TOKEN", open("token.txt").readline()))
