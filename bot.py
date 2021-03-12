@@ -205,4 +205,5 @@ async def purge_message(ctx, limit: int):
     await ctx.channel.purge(limit=limit)
 
 
-bot.run(os.environ.get("BOT_TOKEN", open("token.txt").readline()))
+bot.run(os.environ.get("BOT_TOKEN"))
+
