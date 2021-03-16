@@ -8,9 +8,10 @@ from bs4 import BeautifulSoup
 
 game = ["камень", "ножницы", "бумага"]
 
-blacklist = '+-yaoi+-gay+-futanari+-1futa+-2futas+-3futas+-male/male+-solo_male+-male_only+-trap+-femboy' \
-            '+-overweight+-fat+-bbw+-pavel+-doodledoggy+-nike_neko+-ventrexian+-mephitid+-anthro+-giant_boobs' \
-            '+-giant_ass+-gigantic_ass+-gigantic_nipples+-gigantic_breasts+-dendrophilia+-heavy_bondage+-edithemad+-scat+-shit+-shitting'
+blacklist = os.environ.get("BLACK_TAGS", open("blacklist.txt").readlines())
+blacktags = ''
+for i in blacklist:
+    blacktags += i.rstrip('\n')
 
 HEADERS = {'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4414.0 '
                          'Safari/537.36 Edg/90.0.803.0', 'accept': '*/*'}
@@ -154,36 +155,38 @@ def get_html(url, params=None):
     return r
 
 
-def try_except(*tac):
+def try_except(*taa):
     amount = 1
     tag = ''
     try:
-        amount = int(tac[0])
+        amount = int(taa[0])
     except ValueError:
-        tag = tac[0]
+        tag = taa[0]
     except IndexError:
         tag = tag
         print(tag)
     try:
-        amount = int(tac[-1])
-    except IndexError:  # tac не указан
+        amount = int(taa[-1])
+    except IndexError:  # taa не указан
         pass
     except ValueError:
         try:
-            amount = int(tac[0])
-            tag = tac[1]
+            amount = int(taa[0])
+            tag = taa[1]
         except ValueError:
-            tag = tac[0]
-    list_tac = [tag, amount]
-    return list_tac
+            tag = taa[0]
+    list_taa = [tag, amount]
+    return list_taa
 
 
 @bot.command(name="full", aliases=["фулл"], help="Скидывает фулл", pass_context=True)
-async def parse(ctx, *tac):  # tac - tag and count
-    list_tac = try_except(*tac)
-    tag = list_tac[0]
-    amount = list_tac[1]
-    url = f'https://rule34.xxx/index.php?page=post&s=list&tags={tag}{blacklist}'
+async def parse(ctx, *taa):  # taa - tag and amount
+    if len(taa) > 2:
+        return await ctx.send(f'Введите корректный запрос {ctx.author.mention}.')
+    list_taa = try_except(*taa)
+    tag = list_taa[0]
+    amount = list_taa[1]
+    url = f'https://rule34.xxx/index.php?page=post&s=list&tags={tag}{blacktags}'
     html = get_html(url)
     pages_links = get_pages_links(url, html.text)
     if pages_links == 0:
@@ -199,6 +202,15 @@ async def parse(ctx, *tac):  # tac - tag and count
         await send_image(ctx, pages)
 
 
+@bot.command(name='tags')
+async def tags_help(ctx):  # улучшить
+    taglist = os.environ.get("TAGS", open("taglist.txt").readlines())
+    tags = ''
+    for i in taglist:
+        tags += f'\t{i}'
+    await ctx.send(f'```Классные тэги:\n{tags}```')
+
+
 @bot.command(name='purge', help='Удаляет необходимое количество сообщений из канала.', hidden=True)
 @commands.has_permissions(administrator=True)
 async def purge_message(ctx, limit: int):
@@ -206,4 +218,3 @@ async def purge_message(ctx, limit: int):
 
 
 bot.run(os.environ.get("BOT_TOKEN"))
-
