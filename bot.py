@@ -54,7 +54,7 @@ async def on_message(message):
 @bot.event
 async def on_message_delete(message):  # также добавить, когда юзер изменяет сообщение
     if not message.author.bot:
-        if not message.content.startswith("$"):
+        if not message.content.startswith("$") or not message.content.startswith(";;"):
             if not message.content == "":
                 await message.channel.send(f'Пользователь {message.author.mention} удалил сообщение:')
                 await message.channel.send(f'>>> {message.content}')
